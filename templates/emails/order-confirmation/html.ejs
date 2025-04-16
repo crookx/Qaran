@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .header { background: #FF6B9C; color: white; padding: 20px; }
+    .content { padding: 20px; }
+    .footer { text-align: center; padding: 20px; background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Order Confirmation</h1>
+    </div>
+    <div class="content">
+      <h2>Thank you for your order, <%= user.name %>!</h2>
+      <p>Order ID: <%= order._id %></p>
+      <h3>Order Details:</h3>
+      <% order.items.forEach(item => { %>
+        <div>
+          <p><%= item.product.name %> x <%= item.quantity %></p>
+          <p>Price: $<%= item.price %></p>
+        </div>
+      <% }); %>
+      <p><strong>Total: $<%= order.total %></strong></p>
+    </div>
+    <div class="footer">
+      <p>Qaran Baby Shop</p>
+    </div>
+  </div>
+</body>
+</html>

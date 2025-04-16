@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 20px; text-align: center; }
+        .tracking-info { background: #e9ecef; padding: 15px; margin: 20px 0; }
+        .button { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Order Has Been Shipped!</h1>
+        </div>
+        <div class="content">
+            <p>Great news! Your order is on its way.</p>
+            <div class="tracking-info">
+                <p><strong>Order Number:</strong> {{orderNumber}}</p>
+                <p><strong>Tracking Number:</strong> {{trackingNumber}}</p>
+                <p><strong>Estimated Delivery:</strong> {{estimatedDelivery}}</p>
+            </div>
+            <p>Track your shipment by clicking the button below:</p>
+            <a href="{{FRONTEND_URL}}/orders/{{orderNumber}}/tracking" class="button">Track Shipment</a>
+        </div>
+    </div>
+</body>
+</html>
