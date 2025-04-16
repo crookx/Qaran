@@ -21,6 +21,7 @@ import Category from './models/Category.js';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import winston from 'winston';
+import connectDB from './config/db.js';
 
 // Load environment variables based on NODE_ENV
 dotenv.config({
@@ -58,25 +59,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/qaran_db', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(async () => {
-    console.log('Connected to MongoDB');
-    
-    // Debug database connection
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('Available collections:', collections.map(c => c.name));
-    
-    // Check raw data using native MongoDB driver
-    const db = mongoose.connection.db;
-    const productsCount = await db.collection('products').countDocuments();
-    const categoriesCount = await db.collection('categories').countDocuments();
-    console.log(`Raw database contains ${productsCount} products and ${categoriesCount} categories`);
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+await connectDB();
 
 // Security & utility middleware
 app.use(helmet());
@@ -97,11 +81,11 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
-// Root route
+// Root route handler
 app.get('/', (req, res) => {
-  res.json({ 
+  res.status(200).json({
+    status: 'success',
     message: 'Qaran Baby Shop API is running',
-    status: 'healthy',
     environment: process.env.NODE_ENV
   });
 });
@@ -154,15 +138,16 @@ if (process.env.NODE_ENV === 'production') {
 // Error handling middleware
 app.use(notFound);
 app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
   console.error(err.stack);
-  res.status(err.status || 500).json({
+  res.status(statusCode).json({
     status: 'error',
-    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
-    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

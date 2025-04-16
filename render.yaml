@@ -1,15 +1,13 @@
 services:
   - type: web
-    name: qaran-api
+    name: qaran
     env: node
+    region: oregon
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: FRONTEND_URL
-        sync: false
+      - key: PORT
+        value: 8080
+    autoDeploy: true
