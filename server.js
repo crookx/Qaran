@@ -97,6 +97,15 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Qaran Baby Shop API is running',
+    status: 'healthy',
+    environment: process.env.NODE_ENV
+  });
+});
+
 // Routes
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -148,7 +157,8 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     status: 'error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
   });
 });
 
