@@ -71,7 +71,7 @@ app.use(cors({
   origin: 'https://qaranbaby.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: false,
   optionsSuccessStatus: 204
 }));
 
