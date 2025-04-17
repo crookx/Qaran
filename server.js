@@ -33,6 +33,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Environment setup
+const NODE_ENV = process.env.NODE_ENV || 'development';
+console.log(`Server environment: ${NODE_ENV}`);
+
 // Setup Winston logger
 const logger = winston.createLogger({
   level: 'info',
@@ -65,7 +69,7 @@ await connectDB();
 // Security & utility middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: '*',
   credentials: true
 }));
 app.use(compression());
@@ -73,7 +77,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Development logging
-app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+app.use(morgan('dev'));
 
 // Serve static files
 if (process.env.NODE_ENV === 'development') {
@@ -149,7 +153,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
 });
 
 // Handle unhandled promise rejections
