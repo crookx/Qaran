@@ -26,13 +26,46 @@ router.get('/featured', async (req, res) => {
     const products = await Product.find({ featured: true })
       .populate('category')
       .limit(8);
-    res.json(products);
+    res.json({
+      status: 'success',
+      data: products
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      status: 'error',
+      message: error.message 
+    });
   }
 });
-router.get('/offers', getSpecialOffers);
-router.get('/categories', getCategories);
+router.get('/offers', async (req, res) => {
+  try {
+    const offers = await Product.find({ onSale: true })
+      .populate('category');
+    res.json({
+      status: 'success',
+      data: offers
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error',
+      message: error.message 
+    });
+  }
+});
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Category.find();
+    res.json({
+      status: 'success',
+      data: categories
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error',
+      message: error.message 
+    });
+  }
+});
 router.get('/category/:category', getProductsByCategory);
 
 // Base routes

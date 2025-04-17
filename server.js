@@ -66,12 +66,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Connect to MongoDB
 await connectDB();
 
-// CORS Configuration - Must be before all other middleware
+// CORS Configuration - Must be before all routes
 app.use(cors({
   origin: 'https://qaranbaby.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Request-Method'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
@@ -112,17 +114,11 @@ app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.get('/', (req, res) => {
   res.json({
     status: 'success',
-    message: 'Qaran API is running',
-    endpoints: {
-      products: '/api/products',
-      categories: '/api/products/categories',
-      featured: '/api/products/featured',
-      offers: '/api/products/offers'
-    }
+    message: 'Qaran API is running'
   });
 });
 
-// Routes with proper error handling
+// API Routes
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
@@ -131,6 +127,9 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Handle OPTIONS requests
+app.options('*', cors());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
