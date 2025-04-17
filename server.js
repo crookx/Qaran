@@ -23,7 +23,6 @@ import swaggerUi from 'swagger-ui-express';
 import winston from 'winston';
 import connectDB from './config/db.js';
 
-// Load environment variables based on NODE_ENV
 dotenv.config({
   path: path.join(process.cwd(), `.env.${process.env.NODE_ENV || 'development'}`)
 });
@@ -35,67 +34,33 @@ const app = express();
 
 // Environment setup
 const NODE_ENV = process.env.NODE_ENV || 'development';
-console.log(`Server environment: ${NODE_ENV}`);
-
-// Setup Winston logger
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
-});
-
-// Swagger documentation setup
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Qaran Baby Shop API',
-      version: '1.0.0',
-      description: 'API documentation for Qaran Baby Shop'
-    }
-  },
-  apis: ['./routes/*.js']
-};
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-// Connect to MongoDB
-await connectDB();
+const FRONTEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://qaranbaby.com'
+  : 'http://localhost:3000';
 
 // CORS Configuration
 app.use(cors({
-  origin: ['https://qaranbaby.com', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  origin: FRONTEND_URL,
   credentials: true,
-  maxAge: 86400
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Basic middleware
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(morgan('dev'));
 app.use(compression());
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-// Security & utility middleware
+// Security middleware
 app.use(helmet({
-  crossOriginResourcePolicy: false,
-  crossOriginOpenerPolicy: false
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin" }
 }));
-
-app.use(compression());
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-// Development logging
-app.use(morgan('dev'));
 
 // Serve static files
 if (process.env.NODE_ENV === 'development') {
@@ -103,13 +68,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
-// Base route handler
-app.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'Qaran API is running'
-  });
-});
+// Connect to MongoDB
+await connectDB();
 
 // API Routes
 app.use('/api/products', productRoutes);
@@ -121,58 +81,21 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Handle OPTIONS requests
-app.options('*', cors());
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date(),
-    uptime: process.uptime(),
-    memoryUsage: process.memoryUsage()
+    uptime: process.uptime()
   });
 });
 
-// Request logging middleware
-app.use((req, res, next) => {
-  logger.info({
-    method: req.method,
-    path: req.path,
-    query: req.query,
-    ip: req.ip
-  });
-  next();
-});
-
-// Prepare for production
-if (process.env.NODE_ENV === 'production') {
-  // Security headers for production
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    next();
-  });
-
-  // Trust proxy for secure cookies
-  app.set('trust proxy', 1);
-}
-
-// Error handling middleware
+// Error handling
 app.use(notFound);
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  console.error(err.stack);
-  res.status(statusCode).json({
-    status: 'error',
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack
-  });
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
 });
 
@@ -184,3 +107,5 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+export default app;
