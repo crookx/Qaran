@@ -66,20 +66,20 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Connect to MongoDB
 await connectDB();
 
-// CORS Configuration - Must be before all routes
+// CORS Configuration - Must be first
 app.use(cors({
   origin: 'https://qaranbaby.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Request-Method'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  preflightContinue: false,
   optionsSuccessStatus: 204
 }));
 
+// Basic middleware
 app.use(express.json());
 app.use(morgan('dev'));
-
 app.use(compression());
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
