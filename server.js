@@ -67,18 +67,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 await connectDB();
 
 // CORS Configuration
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://qaranbaby.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
+app.use(cors({
+  origin: ['https://qaranbaby.com', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Security & utility middleware
 app.use(helmet({
@@ -109,12 +103,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
-// Root route handler
+// Base route handler
 app.get('/', (req, res) => {
-  res.status(200).json({
+  res.json({
     status: 'success',
-    message: 'Qaran Baby Shop API is running',
-    environment: process.env.NODE_ENV
+    message: 'Qaran API is running',
+    endpoints: {
+      products: '/api/products',
+      categories: '/api/products/categories',
+      featured: '/api/products/featured',
+      offers: '/api/products/offers'
+    }
   });
 });
 
