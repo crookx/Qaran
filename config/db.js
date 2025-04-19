@@ -10,23 +10,28 @@ const connectDB = async () => {
       : process.env.MONGODB_LOCAL_URI;
 
     if (!connectionString) {
-      throw new Error('MongoDB connection string is not defined in environment variables');
+      throw new Error('MongoDB connection string is not defined');
     }
 
     console.log('Attempting MongoDB connection...');
+    console.log('Environment:', process.env.NODE_ENV);
     
-    const conn = await mongoose.connect(connectionString, {
+    await mongoose.connect(connectionString, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      family: 4
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`MongoDB Connected: ${mongoose.connection.host}`);
 
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
+    // Don't exit in production, let the application retry
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 };
 
