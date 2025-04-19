@@ -4,7 +4,8 @@ const offerSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: true,
+    index: true
   },
   name: {
     type: String,
@@ -18,6 +19,7 @@ const offerSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
+    default: Date.now,
     required: true
   },
   endDate: {
@@ -34,30 +36,15 @@ const offerSchema = new mongoose.Schema({
     required: true,
     min: 0
   }
-}, {
+}, { 
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// Virtual field for time left
-offerSchema.virtual('timeLeft').get(function() {
-  const now = new Date();
-  const end = new Date(this.endDate);
-  const diff = end - now;
-  
-  if (diff <= 0) return '0d 0h';
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return `${days}d ${hours}h`;
-});
-
-// Virtual field for active status
-offerSchema.virtual('isActive').get(function() {
-  const now = new Date();
-  return now >= this.startDate && now <= this.endDate;
-});
+// Index for better query performance
+offerSchema.index({ startDate: 1, endDate: 1 });
 
 const Offer = mongoose.model('Offer', offerSchema);
+
 export default Offer;

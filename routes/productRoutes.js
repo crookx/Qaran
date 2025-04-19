@@ -15,6 +15,8 @@ import { validateQuery, productQuerySchema } from '../middleware/validateRequest
 import { protect, checkRole } from '../middleware/auth.js';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
+import Offer from '../models/Offer.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -31,27 +33,85 @@ router.get('/featured', async (req, res) => {
       data: products
     });
   } catch (error) {
+    console.error('Error fetching featured products:', error);
     res.status(500).json({ 
       status: 'error',
       message: error.message 
     });
   }
 });
+
 router.get('/offers', async (req, res) => {
   try {
-    const offers = await Product.find({ onSale: true })
-      .populate('category');
+    const currentDate = new Date();
+    
+    // First check if products exist for the offer IDs
+    const allOffers = await Offer.find({}).lean();
+    console.log('Raw offers:', allOffers);
+
+    const productIds = allOffers.map(offer => 
+      mongoose.Types.ObjectId.isValid(offer.productId) ? 
+        new mongoose.Types.ObjectId(offer.productId) : null
+    ).filter(id => id !== null);
+
+    const validProducts = await Product.find({
+      '_id': { $in: productIds }
+    }).select('_id');
+
+    const validProductIds = validProducts.map(p => p._id.toString());
+    console.log('Valid product IDs:', validProductIds);
+
+    // Get offers with valid products and dates
+    const offers = await Offer.find({
+      endDate: { $gte: currentDate },
+      productId: { $in: validProductIds }
+    }).populate({
+      path: 'productId',
+      select: 'name price images description category',
+      populate: {
+        path: 'category',
+        select: 'name slug'
+      }
+    });
+
+    console.log('Found offers:', offers);
+
+    const formattedOffers = offers
+      .filter(offer => offer.productId && offer.productId.price)
+      .map(offer => ({
+        _id: offer._id,
+        name: offer.name,
+        product: {
+          _id: offer.productId._id,
+          name: offer.productId.name,
+          price: offer.productId.price,
+          images: offer.productId.images,
+          description: offer.productId.description,
+          category: offer.productId.category
+        },
+        discount: offer.discount,
+        startDate: offer.startDate,
+        endDate: offer.endDate,
+        totalQuantity: offer.totalQuantity,
+        remainingQuantity: offer.remainingQuantity,
+        discountedPrice: Number((offer.productId.price * (1 - offer.discount / 100)).toFixed(2)),
+        isUpcoming: new Date(offer.startDate) > currentDate,
+        status: new Date(offer.startDate) > currentDate ? 'upcoming' : 'active'
+      }));
+
     res.json({
       status: 'success',
-      data: offers
+      data: formattedOffers
     });
   } catch (error) {
+    console.error('Error in offers route:', error);
     res.status(500).json({ 
       status: 'error',
       message: error.message 
     });
   }
 });
+
 router.get('/categories', async (req, res) => {
   try {
     const categories = await Category.find();
@@ -60,12 +120,14 @@ router.get('/categories', async (req, res) => {
       data: categories
     });
   } catch (error) {
+    console.error('Error fetching categories:', error);
     res.status(500).json({ 
       status: 'error',
       message: error.message 
     });
   }
 });
+
 router.get('/category/:category', getProductsByCategory);
 
 // Base routes
@@ -74,7 +136,6 @@ router.get('/', async (req, res) => {
     let query = {};
     
     if (req.query.category) {
-      // Find category by slug first
       const category = await Category.findOne({ slug: req.query.category });
       if (category) {
         query.category = category._id;
@@ -91,6 +152,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('category');
@@ -99,12 +161,13 @@ router.get('/:id', async (req, res) => {
     }
     res.json(product);
   } catch (error) {
+    console.error('Error fetching product by ID:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 // Protected admin routes
-router.use(protect); // Apply authentication to all routes below
+router.use(protect);
 router.post('/', checkRole(['admin']), createProduct);
 router.put('/:id', checkRole(['admin']), updateProduct);
 router.delete('/:id', checkRole(['admin']), deleteProduct);

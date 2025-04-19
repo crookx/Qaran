@@ -2,7 +2,10 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 
 // API Routes

@@ -22,41 +22,48 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import winston from 'winston';
 import connectDB from './config/db.js';
+import config from './config/env.config.js';
+import debugRoutes from './routes/debugRoutes.js';
 
-dotenv.config({
-  path: path.join(process.cwd(), `.env.${process.env.NODE_ENV || 'development'}`)
-});
-
+// Load environment variables before any other configuration
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load the appropriate .env file based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'production' ? '../.env' : '../.env.development';
+dotenv.config({
+  path: path.join(__dirname, envFile)
+});
 
 const app = express();
 
 // Environment setup
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const FRONTEND_URL = process.env.NODE_ENV === 'production' 
+const PORT = 8080; // Force port 8080 for both environments
+const FRONTEND_URL = NODE_ENV === 'production' 
   ? 'https://qaranbaby.com'
   : 'http://localhost:3000';
+
+const ALLOWED_ORIGINS = [
+  'https://baby-shop-mcqv.vercel.app',
+  'http://localhost:3000'
+];
+
+console.log(`Starting server in ${NODE_ENV} mode...`);
 
 // CORS Configuration
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
-// Handle preflight requests
-app.options('*', cors());
-
-// Basic middleware
+// Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(morgan('dev'));
 app.use(compression());
-
-// Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "same-origin" }
@@ -68,44 +75,60 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
-// Connect to MongoDB
-await connectDB();
+// Connect to MongoDB before setting up routes
+try {
+  console.log('Attempting MongoDB connection...');
+  await connectDB();
+  console.log(`Server running in ${NODE_ENV} mode`);
+  
+  // List available collections
+  const collections = await mongoose.connection.db.listCollections().toArray();
+  console.log('Available collections:', collections.map(col => col.name));
+  
+  // API Routes
+  app.use('/api/products', productRoutes);
+  app.use('/api/categories', categoryRoutes);
+  app.use('/api/orders', orderRoutes);
+  app.use('/api/reviews', reviewRoutes);
+  app.use('/api/cart', cartRoutes);
+  app.use('/api/wishlist', wishlistRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/admin', adminRoutes);
 
-// API Routes
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/wishlist', wishlistRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+  // Add debug routes in development
+  if (process.env.NODE_ENV === 'development') {
+    app.use('/api/debug', debugRoutes);
+  }
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date(),
-    uptime: process.uptime()
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date(),
+      uptime: process.uptime()
+    });
   });
-});
 
-// Error handling
-app.use(notFound);
-app.use(errorHandler);
+  // Error handling
+  app.use(notFound);
+  app.use(errorHandler);
 
-const PORT = process.env.PORT || 8080;
-const server = app.listen(PORT, () => {
-  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
-  console.log(err.name, err.message);
-  server.close(() => {
-    process.exit(1);
+  const server = app.listen(PORT, () => {
+    console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
   });
-});
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (err) => {
+    console.log('UNHANDLED REJECTION! 💥 Shutting down...');
+    console.log(err.name, err.message);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
+
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
 export default app;

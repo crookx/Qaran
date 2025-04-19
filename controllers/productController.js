@@ -161,55 +161,62 @@ export const getCategories = catchAsync(async (req, res) => {
 // Update getSpecialOffers function 
 export const getSpecialOffers = async (req, res) => {
   try {
-    const offers = await Offer.find()
-      .populate('productId', 'name image price')
-      .sort('-createdAt')
-      .limit(4);
+    const currentDate = new Date();
+    console.log('Current Date:', currentDate);
 
-    const formattedOffers = offers.map(offer => {
-      const product = offer.productId;
-      const originalPrice = product?.price || 0;
-      const discountedPrice = originalPrice * (1 - offer.discount / 100);
+    // Get all active offers
+    const activeOffers = await Offer.find()
+      .populate('productId')
+      .lean();
 
-      return {
+    console.log('Found offers:', activeOffers);
+
+    if (!activeOffers.length) {
+      console.log('No offers found');
+      return res.json({ status: 'success', data: [] });
+    }
+
+    const formattedOffers = activeOffers
+      .filter(offer => offer.productId && offer.remainingQuantity > 0)
+      .map(offer => ({
         _id: offer._id,
         name: offer.name,
-        productName: product?.name,
-        image: product?.image || '/images/offer-placeholder.jpg',
-        price: originalPrice,
-        discountedPrice: Math.round(discountedPrice * 100) / 100,
+        productId: offer.productId._id,
+        productName: offer.productId.name,
+        image: offer.productId.image,
+        price: offer.productId.price,
         discount: offer.discount,
-        timeLeft: offer.timeLeft,
+        discountedPrice: Math.round(offer.productId.price * (1 - offer.discount / 100)),
         remaining: offer.remainingQuantity,
-        total: offer.totalQuantity,
-        productId: product?._id,
-        isActive: offer.isActive
-      };
-    }).filter(offer => offer.isActive);
+        total: offer.totalQuantity
+      }));
 
     console.log('Formatted offers:', formattedOffers);
 
-    res.status(200).json({
+    return res.json({
       status: 'success',
-      data: { offers: formattedOffers }
+      data: formattedOffers
     });
+
   } catch (error) {
-    console.error('Error fetching offers:', error);
-    res.status(500).json({
+    console.error('Error in getSpecialOffers:', error);
+    return res.status(500).json({
       status: 'error',
       message: error.message
     });
   }
 };
 
-function getTimeLeft(endDate) {
-  if (!endDate) return '0d 0h';
+function getTimeRemaining(endDate) {
   const now = new Date();
   const end = new Date(endDate);
   const diff = end - now;
-  if (diff <= 0) return '0d 0h';
+  
+  if (diff <= 0) return 'Expired';
+  
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
   return `${days}d ${hours}h`;
 }
 

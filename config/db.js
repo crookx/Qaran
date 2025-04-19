@@ -1,24 +1,31 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
+dotenv.config();
+
 const connectDB = async () => {
   try {
-    const uri = 'mongodb+srv://qaranuser:DevMahnX1.@qaran-baby-shop.ed8u0jn.mongodb.net/qaran?retryWrites=true&w=majority';
-    
+    const connectionString = process.env.NODE_ENV === 'production' 
+      ? process.env.MONGODB_URI 
+      : process.env.MONGODB_LOCAL_URI;
+
+    if (!connectionString) {
+      throw new Error('MongoDB connection string is not defined in environment variables');
+    }
+
     console.log('Attempting MongoDB connection...');
-    const conn = await mongoose.connect(uri, {
+    
+    const conn = await mongoose.connect(connectionString, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
     });
 
-    const db = mongoose.connection;
-    const collections = await db.db.listCollections().toArray();
-    console.log('Available collections:', collections.map(c => c.name));
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
 
-    console.log(`MongoDB Connected Successfully: ${conn.connection.host}`);
-    return conn;
   } catch (error) {
-    console.error('MongoDB Connection Error:', error);
+    console.error(`MongoDB Connection Error: ${error.message}`);
     process.exit(1);
   }
 };
