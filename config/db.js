@@ -25,10 +25,13 @@ const connectDB = async () => {
     });
 
     console.log(`MongoDB Connected: ${mongoose.connection.host}`);
+    console.log(`Connected to database: ${mongoose.connection.name}`);
 
   } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
-    // Don't exit in production, let the application retry
+    console.error('MongoDB Connection Error Details:');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
