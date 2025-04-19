@@ -16,25 +16,16 @@ const connectDB = async () => {
     console.log('Attempting MongoDB connection...');
     console.log('Environment:', process.env.NODE_ENV);
     
-    await mongoose.connect(connectionString, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      family: 4
-    });
-
-    console.log(`MongoDB Connected: ${mongoose.connection.host}`);
-    console.log(`Connected to database: ${mongoose.connection.name}`);
+    const connection = await mongoose.connect(connectionString);
+    console.log(`MongoDB Connected: ${connection.connection.host}`);
+    return connection;
 
   } catch (error) {
     console.error('MongoDB Connection Error Details:');
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    console.error('Stack:', error.stack);
+    throw error;
   }
 };
 
