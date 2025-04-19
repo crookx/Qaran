@@ -10,4 +10,6 @@ services:
         value: production
       - key: PORT
         value: 8080
+      - key: MONGODB_URI
+        value: mongodb+srv://qaranuser:iPyjRkJyr3gaAsX3@qaran-baby-shop.ed8u0jn.mongodb.net/qaran?retryWrites=true&w=majority&appName=Qaran-Baby-Shop
     autoDeploy: true
