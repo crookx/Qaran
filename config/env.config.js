@@ -2,7 +2,11 @@ const config = {
   production: {
     PORT: process.env.PORT || 5000,
     MONGODB_URI: process.env.MONGODB_URI,
-    CORS_ORIGIN: 'https://qaranbaby.com'
+    CORS_ORIGIN: [
+      'https://qaranbaby.com',
+      'https://baby-shop-mcqv.vercel.app',
+      'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app'
+    ]
   },
   development: {
     PORT: process.env.PORT || 8080,

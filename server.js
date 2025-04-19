@@ -45,15 +45,25 @@ const FRONTEND_URL = NODE_ENV === 'production'
   : 'http://localhost:3000';
 
 const ALLOWED_ORIGINS = [
+  'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
+  'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app',
   'http://localhost:3000'
 ];
 
-console.log(`Starting server in ${NODE_ENV} mode...`);
-
-// CORS Configuration
+// Update CORS Configuration
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
