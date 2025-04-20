@@ -48,37 +48,38 @@ const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
   'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app',
-  'https://baby-shop-mcqv-lp9jg3l7t-crookxs-projects.vercel.app',  // Add this new URL
   'http://localhost:3000'
 ];
 
 // Update CORS Configuration
-// Update the CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Allow localhost for development
-    if (origin.includes('localhost')) return callback(null, true);
-    
-    // Allow Vercel preview URLs
-    if (origin.includes('baby-shop-mcqv') && origin.includes('vercel.app')) {
-      return callback(null, true);
+    if (ALLOWED_ORIGINS.some(allowedOrigin => origin.includes(allowedOrigin))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    
-    // Allow your main domain
-    if (origin.includes('qaranbaby.com')) {
-      return callback(null, true);
-    }
-    
-    console.log('Blocked origin:', origin);
-    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle OPTIONS preflight requests
+app.options('*', cors());
 
 // Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
