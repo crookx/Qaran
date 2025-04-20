@@ -53,22 +53,31 @@ const ALLOWED_ORIGINS = [
 ];
 
 // Update CORS Configuration
+// Update the CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+    // Allow localhost for development
+    if (origin.includes('localhost')) return callback(null, true);
+    
+    // Allow Vercel preview URLs
+    if (origin.includes('baby-shop-mcqv') && origin.includes('vercel.app')) {
+      return callback(null, true);
     }
+    
+    // Allow your main domain
+    if (origin.includes('qaranbaby.com')) {
+      return callback(null, true);
+    }
+    
+    console.log('Blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Access-Control-Allow-Origin']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
 // Basic middleware setup
