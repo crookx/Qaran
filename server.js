@@ -54,10 +54,8 @@ const ALLOWED_ORIGINS = [
 // Update CORS Configuration
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    if (ALLOWED_ORIGINS.some(allowedOrigin => origin.includes(allowedOrigin))) {
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -65,20 +63,10 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'Accept', 
-    'Origin', 
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Handle OPTIONS preflight requests
+// Add preflight handler
 app.options('*', cors());
 
 // Basic middleware setup
