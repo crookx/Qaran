@@ -48,6 +48,7 @@ const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
   'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app',
+  'https://baby-shop-mcqv-lp9jg3l7t-crookxs-projects.vercel.app',  // Add this new URL
   'http://localhost:3000'
 ];
 
