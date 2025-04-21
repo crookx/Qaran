@@ -12,7 +12,13 @@ const ALLOWED_ORIGINS = [
 
 // CORS middleware
 app.use(cors({
-  origin: ALLOWED_ORIGINS,
+  origin: function(origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -20,8 +26,7 @@ app.use(cors({
     'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',  // Add this
-    'Access-Control-Allow-Headers'  // Add this
-  ]
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Access-Control-Allow-Origin']
 }));
