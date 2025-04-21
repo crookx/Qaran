@@ -10,30 +10,15 @@ const ALLOWED_ORIGINS = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.some(allowedOrigin => origin.includes(allowedOrigin))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: ALLOWED_ORIGINS,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
-    'Accept', 
-    'Origin', 
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+    'Accept'
+  ]
 }));
-
-app.use(express.json());
 
 // Handle preflight requests
 app.options('*', cors());
