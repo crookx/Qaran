@@ -20,23 +20,8 @@ app.use(cors({
     'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With'
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',  // Add this
+    'Access-Control-Allow-Headers'  // Add this
   ]
 }));
-
-// Preflight handling
-app.options('*', cors());
-
-// JSON parsing middleware
-app.use(express.json());
-
-// API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-
-// Example using ES module-style import
-import wishlistRoutes from './routes/wishlistRoutes.js';
-app.use('/api/wishlist', wishlistRoutes);
-
-// Export app for use in server.js
-module.exports = app;
