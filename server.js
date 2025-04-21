@@ -47,9 +47,8 @@ const FRONTEND_URL = NODE_ENV === 'production'
 const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
-  'https://baby-shop-mcqv-av0hz0hl5-crookxs-projects.vercel.app',
-  'http://localhost:3000',
-  'https://qaran.onrender.com'
+  'https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app',
+  'http://localhost:3000'
 ];
 
 // Update the cors middleware configuration
@@ -68,8 +67,7 @@ app.use(cors({
     'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With',
-    'access-control-allow-origin'
+    'X-Requested-With'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
