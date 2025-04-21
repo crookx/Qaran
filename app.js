@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 
+// Allowed frontend origins
 const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
@@ -9,28 +10,33 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000'
 ];
 
+// CORS middleware
 app.use(cors({
   origin: ALLOWED_ORIGINS,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
+    'Content-Type',
+    'Authorization',
     'Accept',
-    'access-control-allow-origin',
     'Origin',
     'X-Requested-With'
   ]
 }));
 
-// Handle preflight requests
+// Preflight handling
 app.options('*', cors());
+
+// JSON parsing middleware
+app.use(express.json());
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
+
+// Example using ES module-style import
 import wishlistRoutes from './routes/wishlistRoutes.js';
 app.use('/api/wishlist', wishlistRoutes);
-// ... other routes
 
+// Export app for use in server.js
 module.exports = app;
