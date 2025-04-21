@@ -49,8 +49,7 @@ const ALLOWED_ORIGINS = [
   'https://baby-shop-mcqv.vercel.app',
   'https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app',
   'http://localhost:3000',
-  'https://baby-shop-two-iota.vercel.app',
-  'https://baby-shop-e23fe8sgi-crookxs-projects.vercel.app' // Add new URL
+  'https://baby-shop-xi.vercel.app'
 ];
 
 app.use(cors({
@@ -61,7 +60,9 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
 // Basic middleware setup
