@@ -47,15 +47,13 @@ const FRONTEND_URL = NODE_ENV === 'production'
 const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
-  'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app',
   'http://localhost:3000'
 ];
 
 // Update CORS Configuration
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || !origin) {
+    if (!origin || ALLOWED_ORIGINS.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -63,11 +61,26 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin'
+  ]
 }));
 
-// Add preflight handler
-app.options('*', cors());
+// Add this BEFORE your routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://baby-shop-mcqv.vercel.app');
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
