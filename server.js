@@ -48,31 +48,19 @@ const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
   'https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://baby-shop-two-iota.vercel.app'
 ];
 
-// Update the cors middleware configuration
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Accept',
-    'Origin',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',  // Add this
-    'Access-Control-Allow-Headers', // Add this
-    'Access-Control-Allow-Methods'  // Add this
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  credentials: true
 }));
 
 // Basic middleware setup
