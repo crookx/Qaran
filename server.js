@@ -65,13 +65,12 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
-    'Authorization', 
+    'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With',
-    'access-control-allow-origin',
-    'Access-Control-Allow-Credentials'
-  ]
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Basic middleware setup
