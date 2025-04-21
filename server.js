@@ -52,6 +52,7 @@ const ALLOWED_ORIGINS = [
   'https://baby-shop-xi.vercel.app'
 ];
 
+// CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
@@ -64,6 +65,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
+
+// Handle OPTIONS preflight
+app.options('*', cors());
 
 // Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
