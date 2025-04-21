@@ -66,13 +66,13 @@ app.use(cors({
     'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods'
+    'X-Requested-With'
   ],
-  exposedHeaders: ['Access-Control-Allow-Origin']
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 // Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
