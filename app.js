@@ -26,7 +26,13 @@ app.use(cors({
     'Authorization',
     'Accept',
     'Origin',
-    'X-Requested-With'
-  ],
-  exposedHeaders: ['Access-Control-Allow-Origin']
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Credentials'
+  ]
 }));
+
+// Add pre-flight handling
+app.options('*', cors());
