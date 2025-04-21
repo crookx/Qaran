@@ -14,4 +14,6 @@ services:
         value: mongodb+srv://qaranuser:iPyjRkJyr3gaAsX3@qaran-baby-shop.ed8u0jn.mongodb.net/qaran?retryWrites=true&w=majority&appName=Qaran-Baby-Shop
       - key: CORS_ORIGINS
         value: "https://baby-shop-mcqv.vercel.app,https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app"
+      - key: FRONTEND_URL
+        value: "https://baby-shop-mcqv.vercel.app"
     autoDeploy: true
