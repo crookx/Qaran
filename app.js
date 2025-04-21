@@ -2,15 +2,28 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 
-// Allowed frontend origins
 const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
-  'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app',
+  'https://baby-shop-mcqv-n36rlgs5h-crookxs-projects.vercel.app',
   'http://localhost:3000'
 ];
 
-// CORS middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
@@ -20,19 +33,5 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Accept',
-    'Origin',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials'
-  ]
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
-
-// Add pre-flight handling
-app.options('*', cors());
