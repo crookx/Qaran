@@ -49,7 +49,8 @@ const ALLOWED_ORIGINS = [
   'https://baby-shop-mcqv.vercel.app',
   'https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app',
   'http://localhost:3000',
-  'https://baby-shop-two-iota.vercel.app'
+  'https://baby-shop-two-iota.vercel.app',
+  'https://baby-shop-e23fe8sgi-crookxs-projects.vercel.app' // Add new URL
 ];
 
 app.use(cors({
