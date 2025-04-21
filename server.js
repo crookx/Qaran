@@ -50,10 +50,10 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000'
 ];
 
-// Update CORS Configuration
+// Update the cors middleware configuration
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -66,23 +66,21 @@ app.use(cors({
     'Authorization', 
     'Accept',
     'Origin',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials'
+    'X-Requested-With'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
-// Handle preflight requests explicitly with additional headers
+// Update the middleware that handles CORS headers
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', ALLOWED_ORIGINS);
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With, Access-Control-Allow-Origin');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
   
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(204).send();
   }
