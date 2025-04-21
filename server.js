@@ -47,7 +47,8 @@ const FRONTEND_URL = NODE_ENV === 'production'
 const ALLOWED_ORIGINS = [
   'https://qaranbaby.com',
   'https://baby-shop-mcqv.vercel.app',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://qaran.onrender.com'
 ];
 
 // Update the cors middleware configuration
@@ -66,26 +67,12 @@ app.use(cors({
     'Authorization', 
     'Accept',
     'Origin',
-    'X-Requested-With'
+    'X-Requested-With',
+    'access-control-allow-origin',
+    'Access-Control-Allow-Credentials'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
-
-// Update the middleware that handles CORS headers
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(204).send();
-  }
-  next();
-});
 
 // Basic middleware setup
 app.use(express.json({ limit: '10kb' }));
