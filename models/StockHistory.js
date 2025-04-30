@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const stockHistorySchema = new mongoose.Schema({
   product: {
@@ -29,4 +29,4 @@ const stockHistorySchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('StockHistory', stockHistorySchema);
+export default mongoose.model('StockHistory', stockHistorySchema);

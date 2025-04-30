@@ -9,8 +9,7 @@ const cartItemSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: true,
-    min: 1,
-    default: 1
+    min: [1, 'Quantity must be at least 1']
   }
 });
 
@@ -20,11 +19,16 @@ const cartSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  items: [cartItemSchema],
-  totalAmount: {
-    type: Number,
-    default: 0
-  }
+  items: [cartItemSchema]
 }, { timestamps: true });
 
-export default mongoose.model('Cart', cartSchema);
+// Pre-save middleware to ensure user and items are set
+cartSchema.pre('save', function(next) {
+  if (!this.user) {
+    next(new Error('Cart must have a user'));
+  }
+  next();
+});
+
+const Cart = mongoose.model('Cart', cartSchema);
+export default Cart;

@@ -9,16 +9,17 @@ const variantSchema = new mongoose.Schema({
     sku: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     name: {
         type: String,
         required: true
     },
     attributes: {
-        type: Map,
-        of: String,
-        required: true
+        color: String,
+        size: String,
+        material: String
     },
     price: {
         type: Number,
@@ -26,12 +27,9 @@ const variantSchema = new mongoose.Schema({
     },
     stock: {
         type: Number,
-        required: true,
         default: 0
     },
-    images: [{
-        type: String
-    }],
+    images: [String],
     isActive: {
         type: Boolean,
         default: true
@@ -39,9 +37,6 @@ const variantSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-
-// Index for faster queries
-variantSchema.index({ product: 1, sku: 1 });
 
 const Variant = mongoose.model('Variant', variantSchema);
 

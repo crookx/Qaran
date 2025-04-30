@@ -1,30 +1,33 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const connectDB = async () => {
   try {
-    const connectionString = process.env.NODE_ENV === 'production' 
-      ? process.env.MONGODB_URI 
-      : process.env.MONGODB_LOCAL_URI;
+    const isDev = process.env.NODE_ENV === 'development';
+    const connectionString = isDev ? process.env.MONGODB_LOCAL_URI : process.env.MONGODB_URI;
 
     if (!connectionString) {
-      throw new Error('MongoDB connection string is not defined');
+      throw new Error(`MongoDB connection string missing for ${process.env.NODE_ENV} environment. Please check your .env file.`);
     }
 
-    console.log('Attempting MongoDB connection...');
-    console.log('Environment:', process.env.NODE_ENV);
-    
-    const connection = await mongoose.connect(connectionString);
-    console.log(`MongoDB Connected: ${connection.connection.host}`);
+    const connection = await mongoose.connect(connectionString, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log(`MongoDB Connected: ${connection.connection.host} (${process.env.NODE_ENV} mode)`);
     return connection;
 
   } catch (error) {
-    console.error('MongoDB Connection Error Details:');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('MongoDB Connection Error Details:', error);
     throw error;
   }
 };

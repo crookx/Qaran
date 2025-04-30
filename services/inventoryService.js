@@ -1,7 +1,8 @@
-const Inventory = require('../models/Inventory');
-const Product = require('../models/Product');
-const Variant = require('../models/Variant');
-const Redis = require('ioredis');
+import Inventory from '../models/Inventory.js';
+import Product from '../models/Product.js';
+import Variant from '../models/Variant.js';
+import Redis from 'ioredis';
+
 const redis = new Redis({
   host: process.env.REDIS_HOST,
   port: process.env.REDIS_PORT
@@ -34,7 +35,6 @@ class InventoryService {
 
     await inventory.save();
 
-    // Update product or variant stock
     if (variantId) {
       await Variant.findByIdAndUpdate(variantId, {
         stock: inventory.currentStock
@@ -83,5 +83,4 @@ class StockService {
   }
 }
 
-module.exports = InventoryService;
-module.exports = StockService;
+export { InventoryService, StockService };

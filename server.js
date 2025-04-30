@@ -1,13 +1,21 @@
+import dotenv from 'dotenv';
+dotenv.config(); // This needs to be at the very top
+
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Initialize environment before other imports
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -16,30 +24,16 @@ import cartRoutes from './routes/cartRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import Product from './models/Product.js';
-import Category from './models/Category.js';
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-import winston from 'winston';
+import questionRoutes from './routes/questionRoutes.js';
+import offerRoutes from './routes/offerRoutes.js'; // ✅ Import OfferRoutes
+
 import connectDB from './config/db.js';
-import config from './config/env.config.js';
-import debugRoutes from './routes/debugRoutes.js';
-
-// Load environment variables before any other configuration
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load the appropriate .env file based on NODE_ENV
-const envFile = process.env.NODE_ENV === 'production' ? '../.env' : '../.env.development';
-dotenv.config({
-  path: path.join(__dirname, envFile)
-});
 
 const app = express();
 
 // Environment setup
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = 8080; // Force port 8080 for both environments
+const PORT = 8080;
 const FRONTEND_URL = NODE_ENV === 'production' 
   ? 'https://qaranbaby.com'
   : 'http://localhost:3000';
@@ -54,16 +48,23 @@ const ALLOWED_ORIGINS = [
 
 // CORS configuration
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: ALLOWED_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Origin',
+    'Accept',
+    'X-Requested-With',
+    'Cache-Control',
+    'Pragma',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
 
 // Handle OPTIONS preflight
@@ -80,43 +81,45 @@ app.use(helmet({
 }));
 
 // Serve static files
-if (process.env.NODE_ENV === 'development') {
+if (NODE_ENV === 'development') {
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/offers', offerRoutes); // ✅ Registered here
+
+// Error handling
+app.use(notFound);
+app.use(errorHandler);
 
 // Move database connection and server initialization into an async function
 const startServer = async () => {
   try {
     console.log('Starting server in', NODE_ENV, 'mode...');
+    console.log('Server will run on port:', PORT);
     
-    // Connect to MongoDB first
+    console.log('MongoDB URI:', process.env.MONGODB_LOCAL_URI || 'Using production URI');
+
     const connection = await connectDB();
-    
+
     if (!connection) {
       throw new Error('Failed to establish database connection');
     }
 
-    // Only proceed with route setup after successful connection
-    app.use('/api/products', productRoutes);
-    app.use('/api/categories', categoryRoutes);
-    app.use('/api/orders', orderRoutes);
-    app.use('/api/reviews', reviewRoutes);
-    app.use('/api/cart', cartRoutes);
-    app.use('/api/wishlist', wishlistRoutes);
-    app.use('/api/auth', authRoutes);
-    app.use('/api/admin', adminRoutes);
-
-    // Error handling middleware
-    app.use(notFound);
-    app.use(errorHandler);
-
-    // Start server
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
     });
 
-    // Handle unhandled rejections
     process.on('unhandledRejection', (err) => {
       console.log('UNHANDLED REJECTION! 💥 Shutting down...');
       console.log(err.name, err.message);
@@ -126,12 +129,11 @@ const startServer = async () => {
     });
 
   } catch (error) {
-    console.error('Server initialization failed:', error);
+    console.error('Server startup error:', error);
     process.exit(1);
   }
 };
 
-// Start the server
 startServer();
 
 export default app;

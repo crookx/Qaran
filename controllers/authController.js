@@ -5,57 +5,85 @@ import { AppError } from '../middleware/errorHandler.js';
 import { sendEmail } from '../services/emailService.js';
 import { EncryptionService } from '../services/encryption.js';
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d'
-  });
+const generateToken = (userId) => {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    console.error('JWT_SECRET environment variable is not set!');
+    throw new AppError('Server configuration error', 500);
+  }
+  return jwt.sign({ id: userId }, jwtSecret, { expiresIn: '24h' });
 };
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email already registered'
+      });
     }
 
+    // Create new user
     const user = await User.create({
       name,
       email,
-      password
+      password: await EncryptionService.hashPassword(password)
     });
 
+    // Generate token
     const token = generateToken(user._id);
+
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token
+      status: 'success',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error.message === 'JWT_SECRET is not configured') {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Server configuration error'
+      });
+    }
+    next(error);
   }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(new AppError('Please provide email and password', 400));
+    }
+
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return next(new AppError('Invalid email or password', 401));
     }
 
     const token = generateToken(user._id);
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token
+
+    res.status(200).json({
+      status: 'success',
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email
+      }
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 

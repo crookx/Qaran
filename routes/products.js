@@ -84,4 +84,33 @@ router.post('/', apiLimiter, async (req, res, next) => {
   }
 });
 
+// Get single product by ID
+router.get('/:id', apiLimiter, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('category')
+      .lean();
+
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      data: product
+    });
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+router.get('/related/:id', apiLimiter, productController.getRelatedProducts);
+
 module.exports = router;

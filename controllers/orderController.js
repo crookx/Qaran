@@ -1,5 +1,5 @@
-import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
+import Order from '../models/Order.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const createOrder = async (req, res, next) => {

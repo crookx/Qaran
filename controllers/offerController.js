@@ -1,77 +1,79 @@
 import Offer from '../models/Offer.js';
 import Product from '../models/Product.js';
-import AppError from '../utils/appError.js';
+import { AppError } from '../middleware/errorHandler.js';
 
-export const getOffers = async (req, res) => {
+export const getOffers = async (req, res, next) => {
   try {
-    console.log('Fetching offers...');
     const currentDate = new Date();
-    
-    // Debug: Log current date
-    console.log('Current date:', currentDate);
+    console.log('Fetching offers, current date:', currentDate);
 
-    // First, get all offers for debugging
-    const allOffers = await Offer.find({});
-    console.log('All offers in database:', allOffers);
-
-    // Then get active offers
-    const activeOffers = await Offer.find({
+    const offers = await Offer.find({
       startDate: { $lte: currentDate },
-      endDate: { $gte: currentDate }
+      endDate: { $gte: currentDate },
+      remainingQuantity: { $gt: 0 }
     }).populate('productId');
 
-    console.log('Active offers found:', activeOffers);
+    console.log('Raw offers from DB:', JSON.stringify(offers, null, 2));
 
-    const formattedOffers = await Promise.all(
-      activeOffers
-        .filter(offer => offer.productId) // Filter out offers with no product
-        .map(async (offer) => {
-          const product = offer.productId;
-          const originalPrice = product.price;
-          const discountedPrice = Math.round(originalPrice * (1 - offer.discount / 100));
+    const formattedOffers = offers
+      .filter(offer => {
+        const hasProduct = !!offer.productId;
+        if (!hasProduct) {
+          console.log('Offer missing product:', offer._id);
+        }
+        return hasProduct;
+      })
+      .map(offer => {
+        const originalPrice = offer.productId.price;
+        const discountedPrice = originalPrice * (1 - offer.discount / 100);
+        
+        return {
+          _id: offer._id,
+          name: offer.name,
+          product: offer.productId,
+          discount: offer.discount,
+          originalPrice,
+          discountedPrice,
+          remainingQuantity: offer.remainingQuantity,
+          totalQuantity: offer.totalQuantity,
+          startDate: offer.startDate,
+          endDate: offer.endDate
+        };
+      });
 
-          return {
-            _id: offer._id,
-            name: offer.name,
-            productId: product._id,
-            productName: product.name,
-            image: product.image,
-            price: originalPrice,
-            discountedPrice: discountedPrice,
-            discount: offer.discount,
-            timeLeft: getTimeRemaining(offer.endDate),
-            remaining: offer.remainingQuantity,
-            total: offer.totalQuantity,
-            startDate: offer.startDate,
-            endDate: offer.endDate
-          };
-        })
-    );
-
-    console.log('Formatted offers:', formattedOffers);
+    console.log('Formatted offers:', JSON.stringify(formattedOffers, null, 2));
 
     res.status(200).json({
       status: 'success',
-      data: formattedOffers
+      data: { offers: formattedOffers }
     });
   } catch (error) {
     console.error('Error in getOffers:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message
-    });
+    next(error);
   }
 };
 
-const getTimeRemaining = (endDate) => {
-  const now = new Date();
-  const end = new Date(endDate);
-  const diff = end - now;
-  
-  if (diff <= 0) return 'Expired';
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
-  return `${days}d ${hours}h`;
+export const updateOfferQuantity = async (req, res, next) => {
+  try {
+    const { offerId } = req.params;
+    const offer = await Offer.findById(offerId);
+    
+    if (!offer) {
+      return next(new AppError('Offer not found', 404));
+    }
+
+    if (offer.remainingQuantity <= 0) {
+      return next(new AppError('Offer is out of stock', 400));
+    }
+
+    offer.remainingQuantity -= 1;
+    await offer.save();
+
+    res.status(200).json({
+      status: 'success',
+      data: { offer }
+    });
+  } catch (error) {
+    next(error);
+  }
 };

@@ -1,3 +1,5 @@
+import { NODE_ENV, isDev } from '../config/env.js';
+
 export class AppError extends Error {
   constructor(message, statusCode) {
     super(message);
@@ -10,20 +12,20 @@ export class AppError extends Error {
 }
 
 export const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  console.error(err.stack);
 
-  if (process.env.NODE_ENV === 'development') {
-    res.status(err.statusCode).json({
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack
-    });
-  } else {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.isOperational ? err.message : 'Something went wrong!'
-    });
-  }
+  // Set Content-Type to application/json
+  res.setHeader('Content-Type', 'application/json');
+
+  res.status(err.status || 500).json({
+    status: 'error',
+    message: err.message || 'Internal server error'
+  });
+};
+
+export const notFound = (req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found'
+  });
 };

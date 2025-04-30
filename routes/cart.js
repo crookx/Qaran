@@ -1,91 +1,98 @@
 const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
-const auth = require('../middleware/auth');
+const Product = require('../models/Product');
+const { protect } = require('../middleware/authMiddleware');
 
-// Get user's cart
-router.get('/', auth, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
-    let cart = await Cart.findOne({ userId: req.user._id });
-    if (!cart) {
-      cart = new Cart({ userId: req.user._id, items: [] });
-      await cart.save();
+    const { productId, quantity = 1 } = req.body;
+    
+    if (!productId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Product ID is required'
+      });
     }
-    res.json(cart);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
-// Add/Update cart item
-router.post('/add', auth, async (req, res) => {
-  try {
-    const { productId, quantity, price, name, image } = req.body;
-    let cart = await Cart.findOne({ userId: req.user._id });
-
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
-      cart = new Cart({ userId: req.user._id, items: [] });
+      cart = new Cart({ user: req.user._id, items: [] });
     }
 
     const existingItem = cart.items.find(item => 
-      item.productId.toString() === productId
+      item.product.toString() === productId
     );
 
     if (existingItem) {
-      existingItem.quantity += quantity;
+      existingItem.quantity = quantity;
     } else {
-      cart.items.push({ productId, quantity, price, name, image });
+      cart.items.push({ product: productId, quantity });
     }
-
-    cart.total = cart.items.reduce((total, item) => 
-      total + (item.price * item.quantity), 0
-    );
 
     await cart.save();
-    res.json(cart);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    await cart.populate('items.product');
 
-// Update item quantity
-router.put('/update/:productId', auth, async (req, res) => {
-  try {
-    const { quantity } = req.body;
-    const cart = await Cart.findOne({ userId: req.user._id });
-    
-    const item = cart.items.find(item => 
-      item.productId.toString() === req.params.productId
-    );
-    
-    if (item) {
-      item.quantity = quantity;
-      cart.total = cart.items.reduce((total, item) => 
-        total + (item.price * item.quantity), 0
-      );
-      await cart.save();
-    }
-    
-    res.json(cart);
+    res.json({
+      status: 'success',
+      data: cart
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Cart operation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
   }
 });
 
 // Remove item from cart
-router.delete('/remove/:productId', auth, async (req, res) => {
+router.delete('/:productId', protect, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user._id });
+    const { productId } = req.params;
+    let cart = await Cart.findOne({ user: req.user._id });
+    
+    if (!cart) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Cart not found'
+      });
+    }
+
     cart.items = cart.items.filter(item => 
-      item.productId.toString() !== req.params.productId
+      item.product.toString() !== productId
     );
-    cart.total = cart.items.reduce((total, item) => 
-      total + (item.price * item.quantity), 0
-    );
+
     await cart.save();
-    res.json(cart);
+    await cart.populate('items.product');
+
+    res.json({
+      status: 'success',
+      data: cart
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+// Get cart
+router.get('/', protect, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate('items.product');
+
+    res.json({
+      status: 'success',
+      data: cart || { items: [] }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
   }
 });
 
