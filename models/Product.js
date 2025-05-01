@@ -3,20 +3,20 @@ import mongoose from 'mongoose';
 const variantSchema = new mongoose.Schema({
   color: {
     type: String,
-    required: true
+    required: false
   },
   size: {
     type: String,
-    required: true
+    required: false
   },
   stock: {
     type: Number,
-    required: true,
+    required: false,
     default: 0
   },
   price: {
     type: Number,
-    required: true
+    required: false
   },
   images: [String]
 });
@@ -38,7 +38,7 @@ const ProductSchema = new mongoose.Schema({
   },
   basePrice: {
     type: Number,
-    required: true
+    required: false
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -68,7 +68,27 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  variants: [variantSchema],
+  variants: {
+    type: [{
+      price: {
+        type: Number,
+        required: false
+      },
+      size: {
+        type: String,
+        required: false
+      },
+      color: {
+        type: String,
+        required: false
+      },
+      stock: {
+        type: Number,
+        default: 0
+      }
+    }],
+    default: []
+  },
   stock: {
     type: Number,
     required: true,

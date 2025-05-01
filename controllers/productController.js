@@ -461,14 +461,6 @@ export const submitQuestion = async (req, res) => {
 export const getRelatedProducts = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid product ID format'
-      });
-    }
-
     const product = await Product.findById(id).populate('category');
     
     if (!product) {
@@ -478,58 +470,27 @@ export const getRelatedProducts = async (req, res) => {
       });
     }
 
-    // Flexible query that matches either category OR age group with similar price
     const relatedProducts = await Product.find({
       _id: { $ne: id },
       $or: [
         { category: product.category._id },
-        { 
-          $and: [
-            { ageGroup: product.ageGroup },
-            { price: { 
-              $gte: product.price * 0.5,
-              $lte: product.price * 1.5 
-            }}
-          ]
-        }
+        { ageGroup: product.ageGroup }
       ]
     })
+    .select('-variants') // Exclude variants field
     .limit(8)
-    .select('name price images description discount category ageGroup')
-    .populate('category', 'name');
+    .populate('category');
 
-    // Count products by match type for debugging
-    const categoryMatches = relatedProducts.filter(p => 
-      p.category._id.toString() === product.category._id.toString()
-    ).length;
-    
-    const ageGroupMatches = relatedProducts.filter(p => 
-      p.ageGroup === product.ageGroup
-    ).length;
-
-    return res.status(200).json({
+    res.status(200).json({
       status: 'success',
-      data: relatedProducts,
-      debug: {
-        sourceProduct: {
-          id: product._id,
-          category: product.category.name,
-          price: product.price,
-          ageGroup: product.ageGroup
-        },
-        matches: {
-          total: relatedProducts.length,
-          byCategory: categoryMatches,
-          byAgeGroup: ageGroupMatches
-        }
-      }
+      data: relatedProducts
     });
+
   } catch (error) {
     console.error('Error in getRelatedProducts:', error);
-    return res.status(500).json({
+    res.status(500).json({
       status: 'error',
-      message: 'Failed to fetch related products',
-      error: error.message
+      message: error.message
     });
   }
 };
