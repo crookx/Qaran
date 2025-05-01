@@ -21,6 +21,7 @@ const ALLOWED_ORIGINS = [
   'https://baby-shop-git-master-crookxs-projects.vercel.app', 
   'https://baby-shop-4agvzm58p-crookxs-projects.vercel.app',
   'https://qaran.onrender.com',
+  'https://qaran-baby-shop-api.onrender.com',
   'http://localhost:3000',
   'http://localhost:8080'
 ];
