@@ -111,6 +111,41 @@ router.get('/:id', apiLimiter, async (req, res) => {
   }
 });
 
-router.get('/related/:id', apiLimiter, productController.getRelatedProducts);
+router.get('/:id/related', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id).populate('category');
+    
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+
+    const relatedProducts = await Product.find({
+      _id: { $ne: id },
+      $or: [
+        { category: product.category._id },
+        { ageGroup: product.ageGroup }
+      ]
+    })
+    .select('-variants') 
+    .limit(8)
+    .populate('category');
+
+    res.status(200).json({
+      status: 'success',
+      data: relatedProducts
+    });
+
+  } catch (error) {
+    console.error('Error in getRelatedProducts:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
 
 module.exports = router;
