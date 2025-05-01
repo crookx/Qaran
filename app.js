@@ -21,7 +21,6 @@ const ALLOWED_ORIGINS = [
   'https://baby-shop-git-master-crookxs-projects.vercel.app', 
   'https://baby-shop-4agvzm58p-crookxs-projects.vercel.app',
   'https://qaran.onrender.com',
-  'https://qaran-baby-shop-api.onrender.com',
   'http://localhost:3000',
   'http://localhost:8080'
 ];
@@ -29,22 +28,39 @@ const ALLOWED_ORIGINS = [
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "same-origin" }
+  crossOriginOpenerPolicy: { policy: "same-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", ...ALLOWED_ORIGINS],
+      imgSrc: ["'self'", "data:", "blob:", "*"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+    }
+  }
 }));
 
-// CORS configuration
+// Consolidated CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       console.log('Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'Cache-Control'
+  ],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400
 }));
@@ -59,20 +75,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cookieParser());
-
-// Add CORS and content-type headers
-app.use((req, res, next) => {
-  res.header('Content-Type', 'application/json');
-  res.header('Access-Control-Allow-Origin', ALLOWED_ORIGINS);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
 
 // API Routes
 app.use('/api/auth', authRoutes);
