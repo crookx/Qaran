@@ -17,10 +17,12 @@ import debugRoutes from './routes/debugRoutes.js';
 const app = express();
 
 const ALLOWED_ORIGINS = [
-  'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app', // New Vercel URL
-  'https://baby-shop-mcqv.vercel.app',
-  'https://qaranbaby.com',
-  'http://localhost:3000'
+  'https://baby-shop-xi.vercel.app',
+  'https://baby-shop-git-master-crookxs-projects.vercel.app', 
+  'https://baby-shop-4agvzm58p-crookxs-projects.vercel.app',
+  'https://qaran.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:8080'
 ];
 
 // Security middleware
@@ -40,8 +42,9 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400
 }));
 

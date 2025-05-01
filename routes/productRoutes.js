@@ -18,7 +18,7 @@ import {
 const router = express.Router();
 
 // Public routes - order matters (more specific first)
-router.get('/related/:id', apiLimiter, getRelatedProducts);
+router.get('/:id/related', getRelatedProducts); // Remove apiLimiter and make it public
 router.get('/:id/reviews', apiLimiter, getProductReviews);
 router.get('/:id/stats', apiLimiter, getProductStats);
 router.get('/featured', apiLimiter, getFeaturedProducts);
