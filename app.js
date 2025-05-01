@@ -17,13 +17,17 @@ import debugRoutes from './routes/debugRoutes.js';
 const app = express();
 
 const ALLOWED_ORIGINS = [
+  'https://baby-shop-mcqv-h1tp7d2j0-crookxs-projects.vercel.app', // New Vercel URL
   'https://baby-shop-mcqv.vercel.app',
-  'https://baby-shop-mcqv-git-master-crookxs-projects.vercel.app',
+  'https://qaranbaby.com',
   'http://localhost:3000'
 ];
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin" }
+}));
 
 // CORS configuration
 app.use(cors({
@@ -31,18 +35,13 @@ app.use(cors({
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Accept',
-    'Origin',
-    'X-Requested-With'
-  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   maxAge: 86400
 }));
 
